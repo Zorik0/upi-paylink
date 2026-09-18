@@ -2,6 +2,8 @@
 
 Scan any UPI QR code, set a fixed amount or a maximum, and share a link. Whoever opens it picks a UPI app (Google Pay, PhonePe, Paytm, BHIM, or any other) and pays. No login needed.
 
+**Live:** https://upi-paylink.vercel.app
+
 ## How it works
 
 1. **Create** (`/`): scan a UPI QR with the camera, upload a QR image, or type a UPI ID. Both `upi://pay?...` and BharatQR/EMV QR codes are supported.
