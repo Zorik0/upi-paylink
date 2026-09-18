@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// No auth: anyone can create a link and anyone with a link ID can read it.
+// Links are immutable — nobody can edit the amount after creation.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /paylinks/{linkId} {
+      allow get: if true;
+      allow list, update, delete: if false;
+
+      allow create: if isValidPayLink(request.resource.data);
+    }
+
+    function isValidPayLink(d) {
+      return d.keys().hasOnly(['pa', 'pn', 'extra', 'mode', 'amountPaise', 'note', 'createdAt'])
+        && d.keys().hasAll(['pa', 'pn', 'extra', 'mode', 'amountPaise', 'note', 'createdAt'])
+        && d.pa is string
+        && d.pa.matches('^[a-zA-Z0-9._-]{2,256}@[a-zA-Z][a-zA-Z0-9.-]{1,64}$')
+        && d.pn is string && d.pn.size() <= 100
+        && d.note is string && d.note.size() <= 80
+        && d.mode in ['fixed', 'max']
+        && d.amountPaise is int
+        && d.amountPaise >= 100          // ₹1
+        && d.amountPaise <= 10000000     // ₹1,00,000
+        && d.extra is map
+        && d.extra.keys().hasOnly(['mc', 'tr', 'tid', 'url'])
+        && d.createdAt == request.time;
+    }
+  }
+}
