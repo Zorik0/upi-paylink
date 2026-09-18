@@ -16,6 +16,20 @@ Scan any UPI QR code, set a fixed amount or a maximum, and share a link. Whoever
    - iOS: uses each app's own scheme (`gpay://`, `phonepe://`, `paytmmp://`) and falls back to `upi://`.
    - Desktop: shows a UPI QR to scan with a phone.
 
+### Supported apps
+Google Pay, PhonePe, Paytm and BHIM are shown up front. Amazon Pay, CRED, WhatsApp, super.money, Navi, MobiKwik, Freecharge, Jupiter, Airtel Thanks, YONO SBI, ICICI iMobile, HDFC PayZapp, Axis open, Kotak 811 and bob World are under **More UPI apps**. **Other UPI app** opens the phone's own app chooser.
+
+iOS can't target an app by package, so it only lists apps with a known URL scheme (Google Pay, PhonePe, Paytm) plus **Other UPI app**. The app list lives in `UPI_APPS` in `src/lib/upi.ts`.
+
+## Install as an app (PWA)
+UPI PayLink can be installed to the home screen and opens full-screen like a native app.
+- **Android (Chrome):** tap **Install** on the banner, or ⋮ → **Install app**.
+- **iPhone (Safari):** tap **Share** → **Add to Home Screen**.
+
+Once installed:
+- **Share a QR screenshot straight in** (Android). In Gallery or WhatsApp, tap **Share → PayLink** on a QR image, and it's read automatically.
+- **Works offline.** Pages you've opened before load without internet, and if you're offline you see a clear message instead of a browser error.
+
 ## For elderly users and people with broken phones
 
 This app splits a UPI payment into two parts that can happen on **different phones, done by different people**:
@@ -87,4 +101,6 @@ Import the repo on Vercel, add the six `NEXT_PUBLIC_FIREBASE_*` variables from `
 
 ## License
 
-[MIT](LICENSE)
+Code: [MIT](LICENSE).
+
+App logos in `public/apps/` are trademarks of their owners. They're used only to identify which app a button opens. They aren't covered by the MIT license and don't imply endorsement.

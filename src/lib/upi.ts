@@ -126,44 +126,55 @@ export type Platform = "android" | "ios" | "desktop";
 export interface UpiApp {
   id: string;
   name: string;
-  androidPackage?: string;
+  /** Icon in /public/apps */
+  logo: string;
+  androidPackage: string;
   /** App-specific scheme prefix on iOS; the query is appended after "pay?". */
   iosPrefix?: string;
-  color: string;
+  /** Shown up front; the rest sit under "More UPI apps". */
+  popular?: boolean;
 }
 
+const defineApp = (id: string, name: string, androidPackage: string, extra: Partial<UpiApp> = {}): UpiApp => ({
+  id,
+  name,
+  logo: `/apps/${id}.webp`,
+  androidPackage,
+  ...extra,
+});
+
 export const UPI_APPS: UpiApp[] = [
-  {
-    id: "gpay",
-    name: "Google Pay",
-    androidPackage: "com.google.android.apps.nbu.paisa.user",
-    iosPrefix: "gpay://upi/",
-    color: "#1a73e8",
-  },
-  {
-    id: "phonepe",
-    name: "PhonePe",
-    androidPackage: "com.phonepe.app",
-    iosPrefix: "phonepe://",
-    color: "#5f259f",
-  },
-  {
-    id: "paytm",
-    name: "Paytm",
-    androidPackage: "net.one97.paytm",
-    iosPrefix: "paytmmp://",
-    color: "#00b9f1",
-  },
-  {
-    id: "bhim",
-    name: "BHIM",
-    androidPackage: "in.org.npci.upiapp",
-    color: "#f47920",
-  },
+  defineApp("gpay", "Google Pay", "com.google.android.apps.nbu.paisa.user", { iosPrefix: "gpay://upi/", popular: true }),
+  defineApp("phonepe", "PhonePe", "com.phonepe.app", { iosPrefix: "phonepe://", popular: true }),
+  defineApp("paytm", "Paytm", "net.one97.paytm", { iosPrefix: "paytmmp://", popular: true }),
+  defineApp("bhim", "BHIM", "in.org.npci.upiapp", { popular: true }),
+  defineApp("amazonpay", "Amazon Pay", "in.amazon.mShop.android.shopping"),
+  defineApp("cred", "CRED", "com.dreamplug.androidapp"),
+  defineApp("whatsapp", "WhatsApp", "com.whatsapp"),
+  defineApp("supermoney", "super.money", "money.super.payments"),
+  defineApp("navi", "Navi", "com.naviapp"),
+  defineApp("mobikwik", "MobiKwik", "com.mobikwik_new"),
+  defineApp("freecharge", "Freecharge", "com.freecharge.android"),
+  defineApp("jupiter", "Jupiter", "money.jupiter"),
+  defineApp("airtel", "Airtel Thanks", "com.myairtelapp"),
+  defineApp("yono", "YONO SBI", "com.sbi.lotusintouch"),
+  defineApp("imobile", "ICICI iMobile", "com.csam.icici.bank.imobile"),
+  defineApp("payzapp", "HDFC PayZapp", "com.hdfcbank.payzapp"),
+  defineApp("axis", "Axis open", "com.axis.mobile"),
+  defineApp("kotak", "Kotak 811", "com.kotak811mobilebankingapp.instantsavingsupiscanandpayrecharge"),
+  defineApp("bobworld", "bob World", "com.bankofbaroda.bobworlddmb"),
 ];
 
+/**
+ * Apps that can be targeted directly on this platform. iOS has no package
+ * targeting, so only apps with a known URL scheme are listed there.
+ */
+export function appsForPlatform(platform: Platform) {
+  return platform === "ios" ? UPI_APPS.filter((a) => a.iosPrefix) : UPI_APPS;
+}
+
 export function upiAppLink(app: UpiApp | null, query: string, platform: Platform) {
-  if (app && platform === "android" && app.androidPackage) {
+  if (app && platform === "android") {
     // An intent URL pins the payment to one app; Android opens the Play Store
     // listing if that app isn't installed.
     return `intent://pay?${query}#Intent;scheme=upi;package=${app.androidPackage};end`;

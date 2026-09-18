@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import QrScanner, { scanQrImage } from "./QrScanner";
 import { createPayLink, type AmountMode } from "@/lib/paylinks";
@@ -45,13 +45,31 @@ export default function CreateLinkForm() {
     return true;
   }, []);
 
-  async function handleFile(file: File | undefined) {
-    if (!file) return;
-    setScanError(null);
-    const text = await scanQrImage(file);
-    if (!text) setScanError("No QR code found in that image.");
-    else handleDecoded(text);
-  }
+  const handleFile = useCallback(
+    async (file: Blob | undefined) => {
+      if (!file) return;
+      const text = await scanQrImage(file);
+      if (!text) setScanError("No QR code found in that image.");
+      else handleDecoded(text);
+    },
+    [handleDecoded],
+  );
+
+  // An image shared into the installed app (see public/sw.js) lands here.
+  useEffect(() => {
+    const shared = new URLSearchParams(window.location.search).get("shared");
+    if (!shared) return;
+    window.history.replaceState(null, "", "/");
+    (async () => {
+      if (shared === "1" && "caches" in window) {
+        const cache = await caches.open("share-target");
+        const response = await cache.match("/shared-image");
+        await cache.delete("/shared-image");
+        if (response) return handleFile(await response.blob());
+      }
+      setScanError("Couldn't read the shared image. Try Upload QR image instead.");
+    })();
+  }, [handleFile]);
 
   function submitManual(e: React.FormEvent) {
     e.preventDefault();
@@ -257,6 +275,7 @@ export default function CreateLinkForm() {
               accept="image/*"
               className="hidden"
               onChange={(e) => {
+                setScanError(null);
                 handleFile(e.target.files?.[0]);
                 e.target.value = "";
               }}

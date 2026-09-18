@@ -1,4 +1,5 @@
 import CreateLinkForm from "@/components/CreateLinkForm";
+import { InstallPrompt } from "@/components/Pwa";
 
 export default function Home() {
   return (
@@ -9,6 +10,7 @@ export default function Home() {
           Scan any UPI QR, set the amount, and share a link anyone can pay with a tap.
         </p>
       </header>
+      <InstallPrompt />
       <CreateLinkForm />
     </main>
   );

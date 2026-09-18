@@ -76,7 +76,7 @@ export default function QrScanner({ onDecode, onClose }: Props) {
 }
 
 /** Decodes a QR from an uploaded image file. */
-export async function scanQrImage(file: File): Promise<string | null> {
+export async function scanQrImage(file: Blob): Promise<string | null> {
   const { default: Scanner } = await import("qr-scanner");
   try {
     const result = await Scanner.scanImage(file, { returnDetailedScanResult: true });

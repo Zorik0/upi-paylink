@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import type { PayLink } from "@/lib/paylinks";
 import {
@@ -8,9 +9,10 @@ import {
   formatInr,
   MIN_AMOUNT_PAISE,
   parseAmountToPaise,
-  UPI_APPS,
+  appsForPlatform,
   upiAppLink,
   type Platform,
+  type UpiApp,
 } from "@/lib/upi";
 
 function detectPlatform(): Platform {
@@ -102,22 +104,13 @@ export default function PayClient({ link }: { link: PayLink }) {
       ) : (
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-slate-900">Pay using</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {UPI_APPS.map((app) => (
-              <AppButton
-                key={app.id}
-                label={app.name}
-                color={app.color}
-                href={query && platform ? upiAppLink(app, query, platform) : null}
-              />
-            ))}
-          </div>
-          <AppButton
-            label="Other UPI app"
-            color="#0f172a"
-            href={query && platform ? upiAppLink(null, query, platform) : null}
-            wide
-          />
+          {platform && (
+            <AppPicker
+              apps={appsForPlatform(platform)}
+              linkFor={(app) => (query ? upiAppLink(app, query, platform) : null)}
+            />
+          )}
+          <OtherAppButton href={query && platform ? upiAppLink(null, query, platform) : null} />
           <button
             type="button"
             onClick={() => setShowQr((v) => !v)}
@@ -136,35 +129,102 @@ export default function PayClient({ link }: { link: PayLink }) {
   );
 }
 
-function AppButton({
-  label,
-  color,
-  href,
-  wide,
-}: {
-  label: string;
-  color: string;
-  href: string | null;
-  wide?: boolean;
-}) {
-  const className = `flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-semibold transition ${
-    wide ? "mt-2 w-full" : ""
-  }`;
-  const dot = <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />;
+function AppPicker({ apps, linkFor }: { apps: UpiApp[]; linkFor: (app: UpiApp) => string | null }) {
+  const [showMore, setShowMore] = useState(false);
+  const popular = apps.filter((a) => a.popular);
+  const more = apps.filter((a) => !a.popular);
 
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-2">
+        {popular.map((app) => (
+          <AppLink key={app.id} href={linkFor(app)} className="gap-3 px-3 py-3">
+            <AppLogo app={app} size={36} />
+            <span className="text-[15px] font-semibold">{app.name}</span>
+          </AppLink>
+        ))}
+      </div>
+
+      {more.length > 0 && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowMore((v) => !v)}
+            aria-expanded={showMore}
+            className="mt-3 flex w-full items-center justify-between rounded-xl px-1 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            <span className="flex items-center gap-2">
+              <span className="flex -space-x-2">
+                {more.slice(0, 4).map((app) => (
+                  <AppLogo key={app.id} app={app} size={22} className="ring-2 ring-white" />
+                ))}
+              </span>
+              More UPI apps ({more.length})
+            </span>
+            <span className={`transition ${showMore ? "rotate-180" : ""}`}>▾</span>
+          </button>
+          {showMore && (
+            <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {more.map((app) => (
+                <AppLink key={app.id} href={linkFor(app)} className="flex-col gap-1.5 px-1 py-3">
+                  <AppLogo app={app} size={40} />
+                  <span className="text-center text-xs font-medium leading-tight">{app.name}</span>
+                </AppLink>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+
+function AppLink({
+  href,
+  className,
+  children,
+}: {
+  href: string | null;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const base = `flex items-center rounded-2xl border transition ${className}`;
   if (!href) {
     return (
-      <span className={`${className} cursor-not-allowed border-slate-100 text-slate-300`} aria-disabled>
-        {dot}
-        {label}
+      <span aria-disabled className={`${base} cursor-not-allowed border-slate-100 text-slate-400 opacity-50 grayscale`}>
+        {children}
       </span>
     );
   }
   return (
-    <a href={href} className={`${className} border-slate-200 text-slate-800 hover:bg-slate-50 active:scale-[0.98]`}>
-      {dot}
-      {label}
+    <a href={href} className={`${base} border-slate-200 text-slate-800 hover:bg-slate-50 active:scale-[0.97]`}>
+      {children}
     </a>
+  );
+}
+
+function AppLogo({ app, size, className = "" }: { app: UpiApp; size: number; className?: string }) {
+  return (
+    <Image
+      src={app.logo}
+      alt=""
+      width={size}
+      height={size}
+      unoptimized
+      className={`shrink-0 rounded-[22%] ${className}`}
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
+function OtherAppButton({ href }: { href: string | null }) {
+  return (
+    <AppLink href={href} className="mt-2 w-full justify-center gap-2 py-3.5 text-sm font-semibold">
+      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-[10px] font-bold text-white">
+        UPI
+      </span>
+      Other UPI app
+    </AppLink>
   );
 }
 
